@@ -1,0 +1,18 @@
+name: Generate Keystore
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create and Show Key
+        run: |
+          keytool -genkey -v -keystore professor.jks -keyalg RSA -keysize 2048 -validity 10000 -alias professor -dname "CN=Professor, C=YE" -storepass "prof123456" -keypass "prof123456"
+          echo "========================================="
+          echo "انسخ النص الطويل الذي سيظهر في الأسفل:"
+          base64 professor.jks | tr -d '\n'
+          echo ""
+          echo "========================================="
