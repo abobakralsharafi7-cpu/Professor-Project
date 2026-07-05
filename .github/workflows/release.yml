@@ -1,20 +1,30 @@
-name: Generate Keystore
+name: Android CI
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  generate-keystore:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Generate JKS file
-      run: |
-        keytool -genkey -v -keystore PROFESSOR.jks -keyalg RSA -keysize 2048 -validity 10000 -alias professor -storepass professor2026 -keypass professor2026 -dname "CN=Professor Gold, OU=App, O=Professor, L=Sanaa, ST=Sanaa, C=YE"
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    - name: Upload Keystore
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Build Release APK
+      run: |
+        cd PROFESSOR
+        gradle assembleRelease
+
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: Professor-Keystore
-        path: PROFESSOR.jks
+        name: Professor-Release-APK
+        path: PROFESSOR/app/build/outputs/apk/release/app-release.apk
