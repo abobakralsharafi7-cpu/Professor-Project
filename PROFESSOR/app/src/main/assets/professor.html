@@ -520,14 +520,30 @@
     function closeImageModal(){document.getElementById('image-modal').style.display='none';}
 
     function downloadImageModal(){
-        const src=document.getElementById('image-modal-content').src;
+        const img=document.getElementById('image-modal-content');
+        const src=img.src;
         if(!src)return;
         const filename='Professor_Trade_Image.jpg';
-        if(window.Android && window.Android.saveImage && src.startsWith('data:')){
-            window.Android.saveImage(src.split(',')[1],filename);
-        }else{
-            let a=document.createElement('a');a.href=src;a.download=filename;a.click();
-        }
+        try{
+            if(window.Android&&window.Android.saveImage){
+                if(src.startsWith('data:')){
+                    window.Android.saveImage(src.split(',')[1],filename);
+                    showNotification("✅ تم حفظ الصورة");
+                    return;
+                }
+                if(img.complete&&img.naturalWidth){
+                    const cvs=document.createElement('canvas');
+                    cvs.width=img.naturalWidth;
+                    cvs.height=img.naturalHeight;
+                    cvs.getContext('2d').drawImage(img,0,0);
+                    const dataUrl=cvs.toDataURL('image/jpeg',0.92);
+                    window.Android.saveImage(dataUrl.split(',')[1],filename);
+                    showNotification("✅ تم حفظ الصورة");
+                    return;
+                }
+            }
+        }catch(e){}
+        let a=document.createElement('a');a.href=src;a.download=filename;a.click();
     }
 
     function fetchReports(tv){let fd=document.getElementById('date-from').value,td=document.getElementById('date-to').value;if(!fd||!td)return customAlert("حدد التاريخ");let fD=new Date(fd);fD.setHours(0,0,0,0);let tD=new Date(td);tD.setHours(23,59,59,999);let f=getLocalTrades().filter(t=>{let ts=new Date(t.timestamp||Date.now());return ts>=fD&&ts<=tD;});f.sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));let tL=f.length,b=f.filter(t=>t.type==='شراء').length,s=f.filter(t=>t.type==='بيع').length,w=f.filter(t=>t.result==='ربح').length,l=f.filter(t=>t.result==='خسارة').length,dr=f.filter(t=>t.result==='تعادل').length,nA=0,nF=0;f.forEach(t=>{nA+=getTradeAchievedPoints(t);nF+=getTradeFirstTargetPoints(t);});document.getElementById('r-total').innerText=tL;document.getElementById('r-buy').innerText=b;document.getElementById('r-sell').innerText=s;document.getElementById('r-win').innerText=w;document.getElementById('r-loss').innerText=l;document.getElementById('r-draw').innerText=dr;document.getElementById('r-net-first').innerText=(nF>=0?"+":"")+nF+" نقطة";document.getElementById('r-net-all').innerText=(nA>=0?"+":"")+nA+" نقطة";let html=f.length===0?"<p style='text-align:center;'>لا صفقات.</p>":f.map((t,i)=>{let c=t.result==='ربح'?'#4caf50':(t.result==='خسارة'?'#f44336':'#aaa'),m=t.result==='ربح'?'✅':(t.result==='خسارة'?'❌':'🛡️'),pt=Math.abs(getTradeAchievedPoints(t)),ev=t.events&&t.events.length>0?`<div style="margin-top:5px;font-size:11px;color:var(--text-dim);">🎯 الأحداث: <br>`+t.events.map(e=>`⏱ ${e.time} - ${e.text}`).join('<br>')+`</div>`:"",mx=((t.result==='خسارة'||t.result==='تعادل')&&t.maxPts>0)?`<div style="color:#D4AF37;font-size:12px;margin-top:4px;">📈 أعلى ربح مسجل: +${t.maxPts} نقطة</div>`:"",trg="";if(t.result==='ربح'){trg=`<div style="font-size:12px;color:#4caf50;margin-top:4px;">🎯 الأهداف المحققة: `;if(t.events&&t.events.some(e=>e.text.includes("الأول"))&&t.tp1_pts)trg+=`+${t.tp1_pts} `;if(t.events&&t.events.some(e=>e.text.includes("الثاني"))&&t.tp2_pts)trg+=`| +${t.tp2_pts} `;if(t.events&&t.events.some(e=>e.text.includes("الثالث"))&&t.tp3_pts)trg+=`| +${t.tp3_pts} `;if(t.events&&t.events.some(e=>e.text.includes("الرابع"))&&t.tp4_pts)trg+=`| +${t.tp4_pts} `;trg+=`</div>`;}let imgH=t.image?`<div style="margin-top:8px;"><img src="${t.image}" style="max-height:80px;border-radius:6px;border:1px solid #D4AF37;cursor:pointer;" onclick="openImageModal('${t.image}')"></div>`:"";let notesHtml=t.notes?`<div style="margin-top:6px; font-size:12px; color:var(--text-dim); background:var(--bg-input); padding:6px; border-radius:6px; border-right:2px solid #D4AF37;">📝 <strong>ملاحظة:</strong> ${t.notes}</div>`:"";return `<div class="trade-item"><div class="trade-head"><span>📅 ${t.openDate}</span></div><div class="trade-body"><div>🏷️ النوع: <strong>${t.type}</strong></div><div>🎯 النتيجة: <strong>${t.result} ${m} (<span style="color:${c}">${pt} نقطة</span>)</strong></div>${mx}${trg}${notesHtml}${ev}${imgH}</div></div>`;}).join('');document.getElementById('detailed-list').innerHTML=html;document.getElementById('d-net-first').innerText=(nF>=0?"+":"")+nF+" نقطة";document.getElementById('d-net-all').innerText=(nA>=0?"+":"")+nA+" نقطة";showStep(tv==='summary'?'step5':'step6');}
