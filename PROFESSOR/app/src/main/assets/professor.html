@@ -432,6 +432,7 @@
         const hs=trade.events&&trade.events.some(e=>e.text.includes("نقل الاستوب")||e.text.includes("تأمين الدخول"));
         let b="";
         if(!h1){b+=`<button class="btn-update" onclick="updateProfitForTrade('${trade.id}',true)" style="margin-top:0; padding:8px; font-size:12px;">تحديث الربح 📈</button>`;}
+        if(!h1&&trade.sl){b+=`<button class="btn-stop" onclick="closeTradeFromDetails('sl')" style="margin-top:0; padding:8px; font-size:12px;">ضرب الاستوب 🛑</button>`;}
         if(!h1&&trade.tp1){b+=`<button class="btn-target" onclick="addQuickEvent(1)" style="margin-top:0; padding:8px; font-size:12px;">الهدف الأول 🎯</button>`;}
         if(h1&&!h2&&trade.tp2){b+=`<button class="btn-target" onclick="addQuickEvent(2)" style="margin-top:0; padding:8px; font-size:12px; background:linear-gradient(45deg,#00796b,#00897b);">الهدف الثاني 🎯</button>`;}
         if(h2&&!h3&&trade.tp3){b+=`<button class="btn-target" onclick="addQuickEvent(3)" style="margin-top:0; padding:8px; font-size:12px; background:linear-gradient(45deg,#00897b,#009688);">الهدف الثالث 🎯</button>`;}
@@ -456,6 +457,8 @@
 
         if(pmpt){customConfirm(pmpt,()=>{sendToTelegram(msg,null,t.routeChatIds);proceedEv(text,isT1,isT2,isT3,isT4,isHitSec,id);},()=>{proceedEv(text,isT1,isT2,isT3,isT4,isHitSec,id);});}else proceedEv(text,isT1,isT2,isT3,isT4,isHitSec,id);
     }
+
+    function closeTradeFromDetails(type){const id=safeStorage.getItem('prof_selected_trade_id');let t=getTradeById(id);if(!t)return;safeStorage.setItem('prof_active_local_id',id);currentTradeType=t.type||currentTradeType||"";safeStorage.setItem('prof_trade_type',currentTradeType);closeTrade(type);}
     
     function proceedEv(txt,isT1,isT2,isT3,isT4,isHitSec,id){
         let t=getTradeById(id);if(!t)return;
